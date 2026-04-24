@@ -10,6 +10,13 @@ export type Insight = {
   action: string;
 };
 
+export type RescheduleSuggestion = {
+  eventTitle: string;
+  fromDate: string;
+  suggestedDate: string;
+  reason: string;
+};
+
 export function generateInsights(events: ClacEvent[]): Insight[] {
   const insights: Insight[] = [];
 
@@ -50,8 +57,7 @@ export function generateInsights(events: ClacEvent[]): Insight[] {
         severity: "medium",
         title: "Moderate load day",
         message: `${date} has a cognitive load score of ${totalLoad}.`,
-        action:
-          "Avoid stacking additional high-load work on this day.",
+        action: "Avoid stacking additional high-load work on this day.",
       });
     }
   }
@@ -99,8 +105,7 @@ export function generateInsights(events: ClacEvent[]): Insight[] {
       severity: "high",
       title: "Heavy high-load concentration",
       message: `${highCount} high-load events are currently scheduled.`,
-      action:
-        "Redistribute high-load work across multiple days where possible.",
+      action: "Redistribute high-load work across multiple days where possible.",
     });
   }
 
@@ -109,10 +114,58 @@ export function generateInsights(events: ClacEvent[]): Insight[] {
       severity: "low",
       title: "Balanced schedule",
       message: "No major overload patterns were detected.",
-      action:
-        "Maintain current spacing and continue tracking cognitive load.",
+      action: "Maintain current spacing and continue tracking cognitive load.",
     });
   }
 
   return insights;
+}
+
+export function generateRescheduleSuggestions(
+  events: ClacEvent[]
+): RescheduleSuggestion[] {
+  const suggestions: RescheduleSuggestion[] = [];
+
+  const eventsByDate: Record<string, ClacEvent[]> = {};
+
+  for (const event of events) {
+    if (!eventsByDate[event.date]) {
+      eventsByDate[event.date] = [];
+    }
+
+    eventsByDate[event.date].push(event);
+  }
+
+  const dailyLoads = Object.entries(eventsByDate).map(([date, dayEvents]) => {
+    const totalLoad = dayEvents.reduce(
+      (sum, event) => sum + getLoadScore(event.loadLevel),
+      0
+    );
+
+    return { date, totalLoad, events: dayEvents };
+  });
+
+  const overloadedDays = dailyLoads.filter((day) => day.totalLoad >= 8);
+  const lighterDays = dailyLoads.filter((day) => day.totalLoad <= 4);
+
+  for (const overloadedDay of overloadedDays) {
+    const movableEvent = overloadedDay.events.find(
+      (event) => event.loadLevel === "high"
+    );
+
+    const targetDay = lighterDays.find(
+      (day) => day.date !== overloadedDay.date
+    );
+
+    if (movableEvent && targetDay) {
+      suggestions.push({
+        eventTitle: movableEvent.title,
+        fromDate: overloadedDay.date,
+        suggestedDate: targetDay.date,
+        reason: `${overloadedDay.date} has a load score of ${overloadedDay.totalLoad}, while ${targetDay.date} has a lighter load score of ${targetDay.totalLoad}.`,
+      });
+    }
+  }
+
+  return suggestions;
 }

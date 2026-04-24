@@ -2,17 +2,17 @@
 
 import { useEffect, useState } from "react";
 import type { ClacEvent } from "@/types/event";
-import { generateInsights, type Insight } from "@/lib/insights";
+import {
+  generateInsights,
+  generateRescheduleSuggestions,
+  type Insight,
+  type RescheduleSuggestion,
+} from "@/lib/insights";
 
 function severityStyles(severity: Insight["severity"]) {
-  if (severity === "high") {
-    return "border-red-800 bg-red-950/40 text-red-100";
-  }
-
-  if (severity === "medium") {
+  if (severity === "high") return "border-red-800 bg-red-950/40 text-red-100";
+  if (severity === "medium")
     return "border-yellow-800 bg-yellow-950/40 text-yellow-100";
-  }
-
   return "border-green-800 bg-green-950/40 text-green-100";
 }
 
@@ -24,6 +24,9 @@ function severityLabel(severity: Insight["severity"]) {
 
 export default function InsightsPage() {
   const [insights, setInsights] = useState<Insight[]>([]);
+  const [rescheduleSuggestions, setRescheduleSuggestions] = useState<
+    RescheduleSuggestion[]
+  >([]);
 
   useEffect(() => {
     const storedEvents = localStorage.getItem("clac-events");
@@ -31,8 +34,10 @@ export default function InsightsPage() {
     if (storedEvents) {
       const parsed: ClacEvent[] = JSON.parse(storedEvents);
       setInsights(generateInsights(parsed));
+      setRescheduleSuggestions(generateRescheduleSuggestions(parsed));
     } else {
       setInsights(generateInsights([]));
+      setRescheduleSuggestions([]);
     }
   }, []);
 
@@ -94,6 +99,48 @@ export default function InsightsPage() {
             ) : null
           )}
         </section>
+
+        {rescheduleSuggestions.length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-2xl font-bold">Rescheduling Suggestions</h2>
+            <p className="mt-2 text-slate-400">
+              CLAC identified high-load events that may be better placed on
+              lighter days.
+            </p>
+
+            <div className="mt-5 space-y-4">
+              {rescheduleSuggestions.map((suggestion, index) => (
+                <article
+                  key={`${suggestion.eventTitle}-${index}`}
+                  className="rounded-2xl border border-blue-800 bg-blue-950/30 p-5"
+                >
+                  <h3 className="text-lg font-semibold">
+                    {suggestion.eventTitle}
+                  </h3>
+
+                  <p className="mt-3 text-sm text-blue-100">
+                    Move from{" "}
+                    <span className="font-semibold">
+                      {suggestion.fromDate}
+                    </span>{" "}
+                    to{" "}
+                    <span className="font-semibold">
+                      {suggestion.suggestedDate}
+                    </span>
+                    .
+                  </p>
+
+                  <div className="mt-4 rounded-xl border border-blue-700 bg-black/20 p-3">
+                    <p className="text-sm font-semibold">Why this helps</p>
+                    <p className="mt-1 text-sm text-blue-100/90">
+                      {suggestion.reason}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );
