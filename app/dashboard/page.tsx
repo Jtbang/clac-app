@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ClacEvent } from "@/types/event";
 import { getTotalLoad, getLoadStatus } from "@/lib/loadScore";
+import LoadChart from "@/components/LoadChart";
 
 export default function DashboardPage() {
   const [events, setEvents] = useState<ClacEvent[]>([]);
@@ -14,14 +15,17 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const eventsByDate = events.reduce<Record<string, ClacEvent[]>>((groups, event) => {
-    if (!groups[event.date]) {
-      groups[event.date] = [];
-    }
+  const eventsByDate = events.reduce<Record<string, ClacEvent[]>>(
+    (groups, event) => {
+      if (!groups[event.date]) {
+        groups[event.date] = [];
+      }
 
-    groups[event.date].push(event);
-    return groups;
-  }, {});
+      groups[event.date].push(event);
+      return groups;
+    },
+    {}
+  );
 
   const dailySummaries = Object.entries(eventsByDate)
     .map(([date, dayEvents]) => {
@@ -37,6 +41,11 @@ export default function DashboardPage() {
     })
     .sort((a, b) => a.date.localeCompare(b.date));
 
+  const chartData = dailySummaries.map((summary) => ({
+    date: summary.date,
+    load: summary.totalLoad,
+  }));
+
   return (
     <main className="min-h-screen bg-slate-950 text-white p-6">
       <div className="mx-auto max-w-5xl">
@@ -44,6 +53,12 @@ export default function DashboardPage() {
         <p className="mt-2 text-slate-400">
           Daily cognitive load summaries based on your scheduled events.
         </p>
+
+        {chartData.length > 0 && (
+          <section className="mt-8">
+            <LoadChart data={chartData} />
+          </section>
+        )}
 
         <section className="mt-8 grid gap-4">
           {dailySummaries.length === 0 ? (
