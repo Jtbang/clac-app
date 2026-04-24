@@ -112,13 +112,13 @@ export default function InsightsPage() {
               {rescheduleSuggestions.map((suggestion, index) => (
                 <article
                   key={`${suggestion.eventTitle}-${index}`}
-                  className="rounded-2xl border border-blue-800 bg-blue-950/30 p-5"
+                  className="rounded-2xl border border-blue-800 bg-blue-950/30 p-5 text-blue-100"
                 >
                   <h3 className="text-lg font-semibold">
                     {suggestion.eventTitle}
                   </h3>
 
-                  <p className="mt-3 text-sm text-blue-100">
+                  <p className="mt-3 text-sm">
                     Move from{" "}
                     <span className="font-semibold">
                       {suggestion.fromDate}

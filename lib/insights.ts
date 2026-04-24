@@ -125,14 +125,10 @@ export function generateRescheduleSuggestions(
   events: ClacEvent[]
 ): RescheduleSuggestion[] {
   const suggestions: RescheduleSuggestion[] = [];
-
   const eventsByDate: Record<string, ClacEvent[]> = {};
 
   for (const event of events) {
-    if (!eventsByDate[event.date]) {
-      eventsByDate[event.date] = [];
-    }
-
+    if (!eventsByDate[event.date]) eventsByDate[event.date] = [];
     eventsByDate[event.date].push(event);
   }
 
